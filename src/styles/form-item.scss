@@ -1,0 +1,57 @@
+ .radio-label {
+    font-size: 14px;
+    color: #606266;
+    line-height: 40px;
+    padding: 0 12px 0 30px;
+  }
+  
+  .el-dialog{
+    margin:0!important;
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100% - 30px);
+    max-width:calc(100% - 30px);
+  }
+  .el-dialog__body{
+    transform: translate3d(0,0,0);
+    font-size: large;
+    overflow:auto;
+    padding: 20px 20px;
+    padding-bottom: 10px;
+  }
+  .el-dialog__header {
+    padding: 10px 10px 10px 20px!important;
+    border-bottom: 1px solid #f4f4f4;
+    background-color: rgb(247, 247, 247);
+    //height: 2vh;
+  }
+  .el-dialog__footer {
+    text-align: center!important;
+    padding: 12px 20px 12px 20px!important;
+    height: 60px;
+    border-top: 1px solid #f4f4f4;
+  }
+  .el-dialog__headerbtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 0;
+    background: 0 0;
+    border: none;
+    outline: 0;
+    cursor: pointer;
+    font-size: 24px!important;
+  }
+  .el-dialog__wrapper {
+    display:flex;
+    justify-content: center;
+    align-items:center;
+  }
+  
+  .el-form--label-left .el-form-item__label {
+      text-align: right;
+  }
+  .customwh{
+    width:80%;
+    height: 85%;
+  }

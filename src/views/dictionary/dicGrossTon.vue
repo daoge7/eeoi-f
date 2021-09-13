@@ -1,0 +1,380 @@
+<template>
+  <div class="app-container">
+    <div class="filter-container">
+      <div style="display:inline-block;">
+        <label class="radio-label" style="padding-left:0;">{{ $t('dictionary.dicGrossTon.tonName') }}</label>
+        <el-input
+          v-model="listQuery.tonName"
+          :placeholder="$t('dictionary.dicGrossTon.tonName')"
+          style="width: 200px;"
+          class="filter-item"
+          @keyup.enter.native="handleFilter"
+        />
+        <label class="radio-label" style="padding-left:0;">{{ $t('dictionary.dicGrossTon.tonCode') }}</label>
+        <el-input
+          v-model="listQuery.tonCode"
+          :placeholder="$t('dictionary.dicGrossTon.tonCode')"
+          style="width: 200px;"
+          class="filter-item"
+          @keyup.enter.native="handleFilter"
+        />
+        <el-button
+          v-waves
+          class="filter-item"
+          icon="el-icon-search"
+          @click="handleFilter"
+        >
+          {{ $t('common.search') }}
+        </el-button>
+        <el-button
+          v-waves
+          class="filter-item"
+          type="info"
+          icon="el-icon-setting"
+          @click="reset"
+        >
+          {{ $t('common.reset') }}
+        </el-button>
+        <div style="margin-top:5px;">
+          <el-button
+            class="filter-item"
+            type="primary"
+            icon="el-icon-plus"
+            @click="handleCreate"
+          >
+            {{ $t('common.add') }}
+          </el-button>
+        </div>
+      </div>
+      <el-table
+        :key="tableKey"
+        v-loading="listLoading"
+        v-adaptive="{bottomOffset: 40}"
+        :data="list"
+        border
+        fit
+        height="100px"
+        highlight-current-row
+        style="width:100%;overflow:auto"
+        :row-style="{height:'35px'}"
+        :cell-style="{padding:'0'}"
+      >
+        <el-table-column label="序号" type="index" show-overflow-tooltip width="50" align="center" />
+        <el-table-column :label="$t('dictionary.dicGrossTon.tonCode')" width="120" align="center" show-overflow-tooltip>
+          <template slot-scope="{row}">
+            <span>{{ row.tonCode }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dictionary.dicGrossTon.tonName')" width="auto" align="center" show-overflow-tooltip>
+          <template slot-scope="{row}">
+            <span>{{ row.tonName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dictionary.dicGrossTon.tonSmall')" width="auto" align="center" show-overflow-tooltip>
+          <template slot-scope="{row}">
+            <span class="link-type">{{ row.tonSmall }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dictionary.dicGrossTon.tonBig')" width="auto" align="center" show-overflow-tooltip>
+          <template slot-scope="{row}">
+            <span>{{ row.tonBig }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('common.operate')"
+          align="center"
+          width="auto"
+          class-name="small-padding fixed-width"
+          show-overflow-tooltip
+        >
+          <template slot-scope="{row}">
+            <el-button type="primary" @click="handleUpdate(row)">
+              {{ $t('common.edit') }}
+            </el-button>
+            <el-button type="success" show-overflow-tooltip @click="handleModifyStatus(row,'detail')">
+              {{ $t('common.detail') }}
+            </el-button>
+            <el-button type="danger" show-overflow-tooltip @click="handleDelete(row,'delete')">
+              {{ $t('common.delete') }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <pagination
+        v-show="total>0"
+        style="margin:0px;padding-left:0px;
+        :total="
+        :page.sync="listQuery.pageNum"
+        :limit.sync="listQuery.pageSize"
+        @pagination="getList"
+      />
+      <el-dialog
+        v-dialogDrag
+        v-el-drag-dialog
+        :title="textMap[dialogStatus]"
+        :visible.sync="dialogFormVisible"
+        custom-class="customwh;"
+        width="30%"
+        @dragDialog="this.$refs.select.blur()"
+        :append-to-body="true"
+      >
+        <el-form
+          ref="dataForm"
+          :rules="rules"
+          :model="temp"
+          label-position="left"
+          label-width="130px"
+          style="width: 100%;"
+        >
+          <el-row>
+            <el-col :span="12">
+              <el-form-item :label="$t('dictionary.dicGrossTon.tonCode')">
+                <el-input v-model="temp.tonCode" :readonly="dialogStatus=='detail'?true:false" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('dictionary.dicGrossTon.tonName')">
+                <el-input v-model="temp.tonName" :readonly="dialogStatus=='detail'?true:false" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item :label="$t('dictionary.dicGrossTon.tonSmall')">
+                <el-input v-model="temp.tonSmall" :readonly="dialogStatus=='detail'?true:false" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('dictionary.dicGrossTon.tonBig')">
+                <el-input v-model="temp.tonBig" :readonly="dialogStatus=='detail'?true:false" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item :label="$t('dictionary.dicGrossTon.explain')">
+                <el-input v-model="temp.explain" type="textarea" :readonly="dialogStatus=='detail'?true:false" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">
+            {{ $t('common.close') }}
+          </el-button>
+          <el-button
+            v-if="dialogStatus!='detail'"
+            type="primary"
+            @click="dialogStatus==='create'?createData():updateData()"
+          >
+            {{ $t('common.save') }}
+          </el-button>
+        </div>
+      </el-dialog>
+    </div>
+  </div>
+</template>
+
+<script>
+import { postFormData } from '@/api/requestPost'
+import waves from '@/directive/waves' // waves directive
+import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import adaptive from '@/directive/el-table'
+import elDragDialog from '@/directive/el-drag-dialog'
+import { getQueryInfo, getQueryPage } from '@/api/requestGet'
+
+export default {
+  name: 'dicGrossTon',
+  components: { Pagination },
+  directives: { waves, adaptive, elDragDialog },
+  data() {
+    return {
+      total: 3,
+      listLoading: false,
+      listQuery: {
+        pageNum: 1,
+        pageSize: 20,
+        tonName: '',
+        tonCode: ''
+      },
+      dialogFormVisible: false,
+      dialogStatus: '',
+      textMap: {
+        update: this.$t('common.edit'),
+        create: this.$t('common.add'),
+        detail: this.$t('common.detail')
+      },
+      list: [],
+      temp: {
+        id: '',
+        tonSmall: '',
+        tonBig: '',
+        explain: '',
+        state: '',
+        tonCode: '',
+        tonName: ''
+      },
+      rules: {
+        tonSmall: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }],
+        tonBig: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }],
+        explain: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }],
+        state: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }],
+        tonCode: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }],
+        tonName: [{ required: true, message: this.$t('common.inputRequired'), trigger: 'blur' }]
+      }
+    }
+  },
+  created() {
+    this.getList()
+  },
+  methods: {
+    getList() {
+      this.listLoading = true
+      var url = '/dicGrossTon/findDicGrossTonList'
+      getQueryPage(url, this.listQuery).then(response => {
+        this.list = response.data.data.items
+        this.total = response.data.data.total
+
+        // Just to simulate the time of the request
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+    },
+    resetTemp() {
+      this.temp = {
+        id: '',
+        version: '',
+        state: '',
+        valid: '',
+        updateTime: '',
+        updateUser: '',
+        code: '',
+        enName: '',
+        cnName: '',
+        nationCn: '',
+        nationEn: '',
+        threeCode: '',
+        remarkInfo: '',
+        branch: '',
+        province: ''
+      }
+    },
+    handleFilter() {
+      this.getList()
+    },
+    reset() {
+      this.listQuery.enName = ''
+      this.listQuery.code = ''
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    handleUpdate(row) {
+      var url = '/dicGrossTon/findDicGrossTonById/' + row.id
+      getQueryPage(url).then(response => {
+        this.temp = response.data.data
+        // Just to simulate the time of the request
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    handleDelete(row, status) {
+      if (status === 'delete') {
+        if (confirm('确定要删除？') === true) {
+          getQueryInfo('/dicGrossTon/deleteDicGrossTonById/' + row.id).then(response => {
+            if (response.data.result) {
+              this.$notify({
+                title: 'Success',
+                message: '删除成功',
+                type: 'success',
+                duration: 2000
+              })
+              const index = this.list.indexOf(row)
+              this.list.splice(index, 1)
+              this.total = this.total - 1
+            } else {
+              this.$notify({
+                title: 'Fail',
+                message: '删除失败',
+                type: 'fail',
+                duration: 2000
+              })
+            }
+          })
+        }
+      }
+    },
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          var url = '/dicGrossTon/saveOrUpdateDicGrossTon'
+          postFormData(url, this.temp).then((response) => {
+            this.total = this.total + 1
+            this.temp.id = response.data.data.id
+            this.list.unshift(this.temp)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Created Successfully',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    handleModifyStatus(row, status) {
+      var url = '/dicGrossTon/findDicGrossTonById/' + row.id
+      getQueryPage(url).then(response => {
+        this.temp = response.data.data
+        // Just to simulate the time of the request
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+      this.dialogStatus = 'detail'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          tempData.version = +new Date(tempData.version)
+          var url = '/dicGrossTon/saveOrUpdateDicGrossTon'
+          postFormData(url, tempData).then(response => {
+            for (const v of this.list) {
+              if (v.id === this.temp.id) {
+                const index = this.list.indexOf(v)
+                this.list.splice(index, 1, response.data.data)
+                break
+              }
+            }
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Update Successfully',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    }
+  }
+}
+</script>
